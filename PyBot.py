@@ -1,10 +1,11 @@
 import json
 import random
 import nltk
-from sklearn.metrics import roc_auc_score, classification_report
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from telegram import Update
+from telegram.ext import Updater, MessageHandler, Filters
 
 config_file = open("big_bot_config.json", "r")
 BOT_CONFIG = json.load(config_file)
@@ -22,24 +23,25 @@ vectorizer.fit(X)
 
 vecX = vectorizer.transform(X)
 
-model = LogisticRegression()
-model.fit(vecX, y)
-
-test = vectorizer.transform(["меньше чем за миллион я не согласился бы"])
-model.predict(test)
-
-model.score(vecX, y)
-
-y_pred = model.predict(vecX)
+# model = LogisticRegression()
+# model.fit(vecX, y)
+#
+# test = vectorizer.transform(["меньше чем за миллион я не согласился бы"])
+# model.predict(test)
+#
+# model.score(vecX, y)
+#
+# y_pred = model.predict(vecX)
 
 model = RandomForestClassifier()
 model.fit(vecX, y)
 
-model.predict(vectorizer.transform(["меньше чем за миллион я не согласился бы"]))
+# model.predict(vectorizer.transform(["меньше чем за миллион я не согласился бы"]))
 
 model.score(vecX, y)
-BOT_KEY = '5304865991:AAE_3fpBPUwZAwa2oCiSqwARebKhwtPEvZs'
+BOT_KEY = '#'
 
+upd = Updater(BOT_KEY)
 
 def filter(text):
     alphabet = 'абвгджзеёийклмнопрстуфхцчшщьыъэюя -'
@@ -76,9 +78,16 @@ def bot(text):
     # Если не найдено
     return random.choice(BOT_CONFIG["failure_phrases"])
 
-question = ""
-while question != "Выйти":
-    question = input()
-    answer = bot(question)
-    print(f"[User]: {question}")
-    print(f"[Bot]: {answer}")
+
+def botReactOnMessage(update: Update, context):
+    text = update.message.text
+    print(f"[user]: {text}")
+    reply = bot(text)
+    update.message.reply_text(reply)
+
+
+handler = MessageHandler(Filters.text, botReactOnMessage)
+upd.dispatcher.add_handler(handler)
+
+upd.start_polling()
+upd.idle()
